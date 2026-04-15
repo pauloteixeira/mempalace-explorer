@@ -113,4 +113,4 @@ mempalaceViewer/
 
 ## License
 
-Private project.
+MIT.
