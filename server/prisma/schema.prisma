@@ -1,0 +1,34 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./mempalace-explorer.db"
+}
+
+model Setting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
+model Favorite {
+  id        Int      @id @default(autoincrement())
+  drawerId  String   @unique
+  wing      String
+  room      String
+  label     String?
+  createdAt DateTime @default(now())
+
+  @@index([wing])
+}
+
+model QueryHistory {
+  id        Int      @id @default(autoincrement())
+  query     String
+  resultCt  Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
