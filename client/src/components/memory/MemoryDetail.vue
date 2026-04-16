@@ -101,6 +101,10 @@ import type { Drawer } from '@/types';
 
 marked.setOptions({ breaks: true, gfm: true });
 
+function replaceAaakStars(text: string): string {
+  return text.replace(/AAAK:\s*(\*+)/g, (_, stars) => `AAAK: ${'★'.repeat(stars.length)}`);
+}
+
 const props = defineProps<{
   drawer: Drawer | null;
 }>();
@@ -115,7 +119,7 @@ const emit = defineEmits<{
 
 const renderedContent = computed(() => {
   if (!props.drawer?.content) return '';
-  return marked.parse(props.drawer.content) as string;
+  return marked.parse(replaceAaakStars(props.drawer.content)) as string;
 });
 
 const contentTags = computed(() => {
