@@ -49,13 +49,16 @@
 
 <script setup lang="ts">
 import { ref, watch, nextTick, onMounted, onUnmounted, computed } from 'vue';
+import { useRouter } from 'vue-router';
 import { useSearchStore } from '@/stores/search';
 import { useMemoryStore } from '@/stores/memory';
 import { usePalaceStore } from '@/stores/palace';
 import { useUiStore } from '@/stores/ui';
-import type { SearchResult } from '@/types';
+import { api } from '@/services/api';
+import type { SearchResult, DrawerListResponse } from '@/types';
 import SearchResults from './SearchResults.vue';
 
+const router = useRouter();
 const searchStore = useSearchStore();
 const memory = useMemoryStore();
 const palace = usePalaceStore();
@@ -93,14 +96,45 @@ function onEnter() {
 async function onSelect(result: SearchResult) {
   close();
 
-  if (ui.currentView !== 'explorer') {
-    ui.setView('explorer');
+  // Navigate to Explorer via the router; await + nextTick lets the route
+  // watcher in AppLayout fire (and close any stale detail panel) BEFORE
+  // we open the fresh one below.
+  if (router.currentRoute.value.path !== '/') {
+    await router.push('/');
+    await nextTick();
   }
 
   palace.selectRoom(result.wing, result.room);
 
-  if (result.drawer_id) {
-    await memory.loadDrawer(result.drawer_id);
+  // mempalace_search doesn't always return drawer_id — fall back to a
+  // content-based lookup in the wing/room when it's missing.
+  let drawerId = result.drawer_id;
+  if (!drawerId) {
+    try {
+      const params = new URLSearchParams({
+        wing: result.wing,
+        room: result.room,
+        limit: '100',
+      });
+      const data = await api.get<DrawerListResponse>(`/memories?${params}`);
+      const resultTitle = result.text.split('\n')[0].trim().replace(/^#+\s*/, '');
+      const match = data.drawers.find(d => {
+        const preview = (d.content_preview || d.content || '').trim();
+        // Primary: match by title (first line, stripped of heading markers)
+        const drawerTitle = preview.split('\n')[0].trim().replace(/^#+\s*/, '');
+        if (drawerTitle && resultTitle && drawerTitle === resultTitle) return true;
+        // Fallback: adaptive prefix comparison (handles previews shorter than 80 chars)
+        const len = Math.min(preview.length, result.text.length, 100);
+        return len >= 20 && preview.slice(0, len) === result.text.slice(0, len);
+      });
+      drawerId = match?.drawer_id;
+    } catch {
+      // ignore — just navigate without opening detail panel
+    }
+  }
+
+  if (drawerId) {
+    await memory.loadDrawer(drawerId);
     memory.editing = false;
     ui.openDetailPanel();
   }

@@ -33,6 +33,28 @@ router.post('/', async (req: Request, res: Response) => {
           content_preview: r.text.slice(0, 200),
           distance: r.distance,
         }));
+
+        // mempalace_search doesn't always return drawer_id — enrich by listing
+        // drawers per wing/room and matching on content prefix
+        const needsId = results.filter(r => !r.drawer_id);
+        if (needsId.length > 0) {
+          const pairs = [...new Set(needsId.map(r => `${r.wing}\x00${r.room}`))];
+          const drawerMap = new Map<string, string>(); // "<wing>\0<room>\0<prefix80>" -> drawer_id
+          for (const pair of pairs) {
+            const [w, rm] = pair.split('\x00');
+            try {
+              const dr = await provider.listDrawers(w, rm, 100, 0);
+              for (const d of dr.drawers) {
+                const prefix = (d.content_preview || d.content || '').slice(0, 80);
+                drawerMap.set(`${w}\x00${rm}\x00${prefix}`, d.drawer_id);
+              }
+            } catch { /* ignore per-pair failures */ }
+          }
+          for (const r of needsId) {
+            const key = `${r.wing}\x00${r.room}\x00${r.content_preview.slice(0, 80)}`;
+            r.drawer_id = drawerMap.get(key) || '';
+          }
+        }
       } catch {
         // semantic search failed, fall through to list-based approach
       }

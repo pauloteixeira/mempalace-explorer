@@ -33,8 +33,8 @@ const editorContainer = ref<HTMLDivElement | null>(null);
 const editor = shallowRef<monaco.editor.IStandaloneCodeEditor | null>(null);
 
 const PLACEHOLDER = `FIND memories
-WHERE tag = "auth"
-AND wing = "Architecture"
+WHERE room = "architecture"
+AND wing = "mempalace-explorer"
 LIMIT 20`;
 
 const KEYWORDS = [
