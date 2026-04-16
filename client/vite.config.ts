@@ -11,11 +11,22 @@ export default defineConfig({
     },
   },
   server: {
-    port: 5173,
+    port: parseInt(process.env.FRONT_PORT || '5173'),
     proxy: {
       '/api': {
-        target: 'http://localhost:3001',
+        target: `http://localhost:${process.env.SERVER_PORT || process.env.PORT || '3001'}`,
         changeOrigin: true,
+      },
+    },
+  },
+  build: {
+    chunkSizeWarningLimit: 4500,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('monaco-editor')) return 'monaco-editor'
+          if (id.includes('d3')) return 'vendor-d3'
+        },
       },
     },
   },

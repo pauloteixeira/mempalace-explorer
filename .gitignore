@@ -141,3 +141,4 @@ vite.config.ts.timestamp-*
 .claude/
 .cursor/
 *.db
+.mempalace-explorer.pid
