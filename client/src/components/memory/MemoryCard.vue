@@ -24,11 +24,10 @@
     </div>
 
     <p
-      class="text-xs text-gray-500 line-clamp-3 mb-3 leading-relaxed cursor-pointer"
+      class="snippet-content text-xs text-gray-500 line-clamp-3 mb-3 leading-relaxed cursor-pointer"
       @click="emit('select', drawer)"
-    >
-      {{ snippet }}
-    </p>
+      v-html="snippet"
+    />
 
     <div class="flex items-center gap-2 flex-wrap">
       <span class="inline-flex items-center text-xs px-1.5 py-0.5 rounded bg-surface-100 dark:bg-surface-800 text-gray-500 dark:text-gray-400">
@@ -65,9 +64,16 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
+import { marked } from 'marked';
 import type { Drawer } from '@/types';
 import { useUiStore } from '@/stores/ui';
 import { useSettingsStore, DEFAULT_PROMPT_TEMPLATE } from '@/stores/settings';
+
+marked.setOptions({ breaks: true, gfm: true });
+
+function replaceAaakStars(text: string): string {
+  return text.replace(/AAAK:\s*(\*+)/g, (_, stars) => `AAAK: ${'★'.repeat(stars.length)}`);
+}
 
 const props = defineProps<{
   drawer: Drawer;
@@ -84,14 +90,15 @@ const settingsStore = useSettingsStore();
 
 const title = computed(() => {
   const text = props.drawer.content_preview || props.drawer.content || '';
-  const firstLine = text.split('\n')[0].trim();
+  const firstLine = text.split('\n')[0].trim().replace(/^#+\s*/, '');
   return firstLine.length > 80 ? firstLine.slice(0, 80) + '...' : firstLine;
 });
 
 const snippet = computed(() => {
   const text = props.drawer.content_preview || props.drawer.content || '';
   const lines = text.split('\n').slice(1).join('\n').trim();
-  return lines.length > 200 ? lines.slice(0, 200) + '...' : lines;
+  const truncated = lines.length > 200 ? lines.slice(0, 200) + '...' : lines;
+  return marked.parseInline(replaceAaakStars(truncated)) as string;
 });
 
 const tags = computed(() => {
@@ -132,3 +139,29 @@ async function copyPrompt() {
   }
 }
 </script>
+
+<style scoped>
+.snippet-content :deep(strong) {
+  font-weight: 600;
+  color: inherit;
+}
+.snippet-content :deep(em) {
+  font-style: italic;
+  color: inherit;
+}
+.snippet-content :deep(code) {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 0.7rem;
+  background: rgba(148, 163, 184, 0.12);
+  border-radius: 3px;
+  padding: 0 3px;
+}
+.snippet-content :deep(a) {
+  color: #60a5fa;
+  text-decoration: underline;
+}
+.snippet-content :deep(del) {
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+</style>
