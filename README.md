@@ -25,6 +25,19 @@ The `mempalace` CLI must be available on your PATH, or you can provide the full 
 
 ## Quick Start
 
+### Option A -- CLI (recommended)
+
+```bash
+git clone https://github.com/user/mempalace-explorer.git
+cd mempalace-explorer
+npm install -g .
+
+mempalace-explorer init   # installs deps, sets up DB, builds everything
+mempalace-explorer run    # http://localhost:3001
+```
+
+### Option B -- Manual
+
 ```bash
 # 1. Install dependencies (root, client, and server)
 npm install
@@ -42,6 +55,47 @@ npm run dev
 
 The client runs on **http://localhost:5173** and the server on **http://localhost:3001**.
 
+## CLI Usage
+
+After installing globally with `npm install -g .`, the `mempalace-explorer` command is available system-wide.
+
+### `mempalace-explorer init`
+
+Installs all dependencies, generates the Prisma client, runs database migrations, and builds both client and server for production.
+
+### `mempalace-explorer run [options]`
+
+| Flag | Description | Default |
+|---|---|---|
+| `-p, --port <number>` | Server port (API + frontend) | `3001` |
+| `--front-port <number>` | Vite dev server port (only with `--dev`) | `5173` |
+| `-d, --detach` | Run in background (returns terminal immediately) | `false` |
+| `-D, --dev` | Start in development mode with HMR | `false` |
+| `-o, --open` | Open browser automatically (implies `--detach`) | `false` |
+
+**Examples:**
+
+```bash
+mempalace-explorer run                          # production on :3001 (foreground)
+mempalace-explorer run --port 4000              # production on :4000 (foreground)
+mempalace-explorer run -d                       # production, detached (background)
+mempalace-explorer run -d --port 4000           # production on :4000, detached
+mempalace-explorer run --open                   # detach + open browser
+mempalace-explorer run --dev                    # dev mode (Vite :5173 + Express :3001)
+mempalace-explorer run --dev --port 3000 --front-port 8080  # custom dev ports
+mempalace-explorer run -d --dev                 # dev mode, detached
+```
+
+In production mode, a single Express server serves both the API (`/api/*`) and the Vue SPA as static files. In dev mode, Vite runs separately with HMR.
+
+The server runs persistently in the background until explicitly stopped -- closing the browser does **not** stop the server. This is by design for spaced-out queries.
+
+### `mempalace-explorer stop`
+
+Stops a running instance that was started with `--detach` (`-d`) or `--open`. Kills the entire process tree and cleans up the PID file. If no instance is running, it reports that cleanly.
+
+Duplicate-run protection: attempting to `run -d` while an instance is already running will fail with a message to `stop` first.
+
 ## First-Run Setup
 
 On first launch the app redirects to the **Settings** page where you:
@@ -57,31 +111,35 @@ Configuration is persisted in a local SQLite database at `server/prisma/dev.db`.
 
 ```
 mempalace-explorer/
-├── client/                  # Vue 3 + Vite frontend
+├── cli/                        # CLI tool (commander.js)
+│   ├── index.ts                #   Entry point + command registration
+│   ├── commands/               #   init, run, stop commands
+│   └── utils.ts                #   Helpers (PID management, spawn, logger)
+├── client/                     # Vue 3 + Vite frontend
 │   └── src/
-│       ├── assets/styles/   # Tailwind + custom theme
-│       ├── components/      # Reusable UI components
-│       │   ├── graph/       #   D3 force-directed graph
-│       │   ├── layout/      #   AppLayout, Topbar, Sidebar, StatusBar, Breadcrumb
-│       │   ├── memory/      #   MemoryCard, MemoryDetail, MemoryEditor
-│       │   ├── query/       #   Monaco QueryEditor, QueryResults table
-│       │   ├── search/      #   SearchBar modal, SearchResults list
-│       │   ├── settings/    #   ProviderSelector, ConnectionTester
-│       │   ├── timeline/    #   TimelineItem
-│       │   └── tree/        #   TreeView, TreeNode (recursive)
-│       ├── composables/     # useKeyboard (global shortcuts)
-│       ├── router/          # Vue Router (lazy-loaded routes)
-│       ├── services/        # HTTP client (fetch wrapper)
-│       ├── stores/          # Pinia stores (settings, palace, memory, search, ui)
-│       ├── types/           # Shared TypeScript interfaces
-│       └── views/           # Page-level components
-├── server/                  # Express + Prisma backend
-│   ├── prisma/              # Schema & SQLite DB
+│       ├── assets/styles/      # Tailwind + custom theme
+│       ├── components/         # Reusable UI components
+│       │   ├── graph/          #   D3 force-directed graph
+│       │   ├── layout/         #   AppLayout, Topbar, Sidebar, StatusBar, Breadcrumb
+│       │   ├── memory/         #   MemoryCard, MemoryDetail, MemoryEditor
+│       │   ├── query/          #   Monaco QueryEditor, QueryResults table
+│       │   ├── search/         #   SearchBar modal, SearchResults list
+│       │   ├── settings/       #   ProviderSelector, ConnectionTester
+│       │   ├── timeline/       #   TimelineItem
+│       │   └── tree/           #   TreeView, TreeNode (recursive)
+│       ├── composables/        # useKeyboard (global shortcuts)
+│       ├── router/             # Vue Router (lazy-loaded routes)
+│       ├── services/           # HTTP client (fetch wrapper)
+│       ├── stores/             # Pinia stores (settings, palace, memory, search, ui)
+│       ├── types/              # Shared TypeScript interfaces
+│       └── views/              # Page-level components
+├── server/                     # Express + Prisma backend
+│   ├── prisma/                 # Schema & SQLite DB
 │   └── src/
-│       ├── providers/       # MCP Client & CLI provider implementations
-│       ├── routes/          # REST API routes
-│       └── types/           # Server-side TypeScript interfaces
-└── package.json             # Workspace root (npm workspaces + concurrently)
+│       ├── providers/          # MCP Client & CLI provider implementations
+│       ├── routes/             # REST API routes
+│       └── types/              # Server-side TypeScript interfaces
+└── package.json                # Workspace root (npm workspaces + CLI bin)
 ```
 
 ## Scripts
@@ -90,6 +148,8 @@ mempalace-explorer/
 |---|---|
 | `npm run dev` | Start client + server concurrently |
 | `npm run build` | Build client and server for production |
+| `npm run build:cli` | Build the CLI tool |
+| `npm run build:all` | Build client, server, and CLI |
 | `npm run dev:client` | Start only the Vite dev server |
 | `npm run dev:server` | Start only the Express dev server |
 

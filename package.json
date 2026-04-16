@@ -1,7 +1,17 @@
 {
   "name": "mempalace-explorer",
   "version": "1.0.0",
-  "private": true,
+  "description": "A modern web application for visually navigating, searching, and managing MemPalace memories.",
+  "bin": {
+    "mempalace-explorer": "./cli/dist/index.js"
+  },
+  "files": [
+    "cli/dist",
+    "client",
+    "server",
+    "package.json",
+    "README.md"
+  ],
   "workspaces": [
     "client",
     "server"
@@ -9,11 +19,18 @@
   "scripts": {
     "dev": "concurrently -n server,client -c blue,green \"npm run dev -w server\" \"npm run dev -w client\"",
     "build": "npm run build -w client && npm run build -w server",
+    "build:cli": "cd cli && npx tsc -p tsconfig.json",
+    "build:all": "npm run build && npm run build:cli",
     "dev:server": "npm run dev -w server",
     "dev:client": "npm run dev -w client",
     "prisma:migrate": "prisma migrate dev --schema=server/prisma/schema.prisma",
     "prisma:pull": "prisma db pull --schema=server/prisma/schema.prisma",
-    "prisma:generate": "prisma generate --schema=server/prisma/schema.prisma"
+    "prisma:generate": "prisma generate --schema=server/prisma/schema.prisma",
+    "postinstall": "npm run build:cli || true",
+    "prepare": "npm run build:cli || true"
+  },
+  "dependencies": {
+    "commander": "^13.1.0"
   },
   "devDependencies": {
     "concurrently": "^9.1.0"

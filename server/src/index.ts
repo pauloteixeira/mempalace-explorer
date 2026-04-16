@@ -1,5 +1,7 @@
 import express from 'express';
 import cors from 'cors';
+import { resolve } from 'path';
+import { existsSync } from 'fs';
 import settingsRoutes from './routes/settings';
 import taxonomyRoutes from './routes/taxonomy';
 import memoriesRoutes from './routes/memories';
@@ -24,6 +26,14 @@ app.use('/api/search', searchRoutes);
 app.use('/api/kg', kgRoutes);
 app.use('/api/graph', kgRoutes);
 app.use('/api/query', queryRoutes);
+
+const clientDist = resolve(__dirname, '../../client/dist');
+if (existsSync(clientDist)) {
+  app.use(express.static(clientDist));
+  app.get('*', (_req, res) => {
+    res.sendFile(resolve(clientDist, 'index.html'));
+  });
+}
 
 app.listen(PORT, () => {
   console.log(`MemPalace server running on http://localhost:${PORT}`);
