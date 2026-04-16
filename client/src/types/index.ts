@@ -185,4 +185,4 @@ export interface Favorite {
 
 // --- View modes ---
 
-export type ViewMode = 'explorer' | 'graph' | 'query-lab' | 'timeline';
+export type ViewMode = 'explorer' | 'palace' | 'graph' | 'query-lab' | 'timeline';

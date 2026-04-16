@@ -56,7 +56,7 @@ Configuration is persisted in a local SQLite database at `server/prisma/dev.db`.
 ## Project Structure
 
 ```
-mempalaceViewer/
+mempalace-explorer/
 ├── client/                  # Vue 3 + Vite frontend
 │   └── src/
 │       ├── assets/styles/   # Tailwind + custom theme

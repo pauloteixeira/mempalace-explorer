@@ -73,6 +73,7 @@ const isMac = navigator.platform.toUpperCase().includes('MAC');
 
 const tabs = [
   { label: 'Explorer', route: '/' },
+  { label: 'Palace', route: '/palace' },
   { label: 'Graph', route: '/graph' },
   { label: 'Query Lab', route: '/query-lab' },
   { label: 'Timeline', route: '/timeline' },
