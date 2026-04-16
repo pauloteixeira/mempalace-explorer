@@ -33,6 +33,7 @@ npm install
 cd server
 npx prisma generate
 npx prisma db push
+npx prisma migrate deploy
 cd ..
 
 # 3. Start both client and server in dev mode
@@ -55,7 +56,7 @@ Configuration is persisted in a local SQLite database at `server/prisma/dev.db`.
 ## Project Structure
 
 ```
-mempalaceViewer/
+mempalace-explorer/
 ├── client/                  # Vue 3 + Vite frontend
 │   └── src/
 │       ├── assets/styles/   # Tailwind + custom theme

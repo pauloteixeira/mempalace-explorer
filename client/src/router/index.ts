@@ -7,6 +7,11 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/views/ExplorerView.vue'),
   },
   {
+    path: '/palace',
+    name: 'palace',
+    component: () => import('@/views/PalaceView.vue'),
+  },
+  {
     path: '/graph',
     name: 'graph',
     component: () => import('@/views/GraphView.vue'),
